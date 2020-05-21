@@ -95,7 +95,7 @@ RegExp subclassing machinery involves both @@species and dynamic property lookup
 
 ### Prototype methods
 
-Methods on `RegExp`.prototype will have the following changes where applicable.
+Methods on `RegExp.prototype` will have the following changes where applicable.
 
 - If `this` does not have [[RegExpMatcher]], throw a TypeError.
 - When creating new `RegExp` instances, a %RegExp% instance will be created in the current Realm instead of consulting `this.constructor[`@@species`]`.
