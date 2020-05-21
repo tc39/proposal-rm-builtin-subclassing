@@ -45,7 +45,7 @@ Type I is supported if creating subclasses of built-ins is possible. For example
 
 ### Cost benefit
 
-**There is crucial dependence on Type I subclassing and it is worth the implementation and language cost.**
+㊟ **There is crucial dependence on Type I subclassing and it is worth the implementation and language cost.**
 
 Type I is used by user libraries, as well as by the web platform in WebIDL and DOM.
 
@@ -55,7 +55,7 @@ Type II is supported if built-in methods create new instances of the subclass. F
 
 ### Cost benefit
 
-**Beneficial, but at cost.**
+㊟ **Beneficial, but at cost.**
 
 Type II is the intuition enjoyed by many developers. It enables user libraries to subclass built-ins like `Array` without also having to maintain overrides of all instance-creating methods.
 
@@ -67,7 +67,7 @@ Type III is supported if built-in methods create new instances of the subclass's
 
 ### Cost benefit
 
-**Not useful, and at great cost.**
+㊟ **Not useful, and at great cost.**
 
 Type III gives subclasses expressivity to actually _opt out_ of Type II support. If `NodeList.prototype.map`, as inherited from `Array.prototype.map`, actually wanted to return an `Array` instead of a `NodeList`, it would opt out via setting `NodeList[`@@species`]` to `Array`. In more complex cases, each instance-creating method may have its own consideration, and a single @@species value on the constructor is insufficient.
 
@@ -75,7 +75,7 @@ Supporting @@species compounds the cost already incurred by Type II by making th
 
 There are no known compelling use cases that are worth this cost.
 
-## Type IV: delegation to property lookups in methods
+## Type IV: delegation to property lookups in built-in methods
 
 Type IV is supported if built-in methods consult properties on instances instead of internal slots. For example, if `RegExp.prototype[`@@match`]` calls `this.exec` instead of the built-in RegExp exec. Support for this is provided by, well, delegating to property lookups.
 
@@ -83,7 +83,7 @@ Note that `RegExp`'s @@match, @@matchAll, @@replace, @@search, and @@split symbo
 
 ### Cost benefit
 
-**Harmful, and at great cost.**
+㊟ **Harmful, and at great cost.**
 
 Type IV is harmful expressivity. It is very difficult for implementations to provide robust fast paths at all for `RegExp`, which users have high performance expectations of. The cost of this, depending on the number of overrideable properties, is the cost of Type II and III combined, and then some.
 
