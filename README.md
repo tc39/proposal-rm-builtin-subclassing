@@ -10,8 +10,7 @@ This is a significant, fill-or-kill, backwards incompatible change that seeks to
 
 # Motivation
 
-Supporting subclassing in built-ins via @@species and related machinery incurs
-significant burden:
+Supporting subclassing in built-ins via @@species and related machinery incurs significant burden:
 
 - Increased implementation complexity and maintainability
 - Performance cliffs
@@ -32,15 +31,67 @@ Firefox
 
 - https://bugzilla.mozilla.org/show_bug.cgi?id=1537924
 
-Supporting built-in subclassing has also negatively affected authoring of new
-built-ins. Current and future spec authors, often in deference to consistency,
-propagate the @@species machinery.
+Supporting built-in subclassing has also negatively affected authoring of new built-ins. Current and future spec authors, often in deference to consistency, propagate the @@species machinery.
 
-@@species has also negatively affected other specifications that interact with
-JavaScript, like WebAssembly, that were not aware of this corner of the
-specification.
+@@species has also negatively affected other specifications that interact with JavaScript, like WebAssembly, that were not aware of this corner of the specification.
 
-# Proposed New Old Semantics
+# Taxonomy of subclassing
+
+@domenic has an excellent taxonomy for subclassing built-ins in JS, which I adopt here and modified slightly. JS currently supports all of the following types of subclassing of built-ins.
+
+## Type I: minimal support
+
+Type I is supported if creating subclasses of built-ins is possible. For example, if derived class can call `super()`. Support for this is provided via `new.target`.
+
+### Cost benefit
+
+**There is crucial dependence on Type I subclassing and it is worth the implementation and language cost.**
+
+Type I is used by user libraries, as well as by the web platform in WebIDL and DOM.
+
+## Type II: subclass instance creation in built-in methods
+
+Type II is supported if built-in methods create new instances of the subclass. For example, if `Array.prototype.map` or `Array.from` returns instances of subclasses of `Array`. Support for this is provided by delegating to `this.constructor[`@@species`]` inside built-in methods for the default @@species getter.
+
+### Cost benefit
+
+**Beneficial, but at cost.**
+
+Type II is the intuition enjoyed by many developers. It enables user libraries to subclass built-ins like `Array` without also having to maintain overrides of all instance-creating methods.
+
+However, it incurs implementation complexity in that built-in methods have overrideable behavior that results in arbitrary code being executed via `this.constructor`. In implementations, this results in a proliferation of slow-paths and invariants that cause JIT code to deoptimize. Failure to do so may and have resulted in serious security vulnerabilities in browsers. In the language, `this.constructor` resulting in possible arbitrary code execution in some built-ins increases difficulty of reasoning.
+
+## Type III: customizable subclass creation in built-in methods
+
+Type III is supported if built-in methods create new instances of the subclass's choosing. For example, if `Array.prototype.map` or `Array.from` returns instances of subclasses of `Array[`@@species`]`. Support for this is provided by delegating to `this.constructor[`@@species`]` inside built-in methods with custom values for the @@species property.
+
+### Cost benefit
+
+**Not useful, and at great cost.**
+
+Type III gives subclasses expressivity to actually _opt out_ of Type II support. If `NodeList.prototype.map`, as inherited from `Array.prototype.map`, actually wanted to return an `Array` instead of a `NodeList`, it would opt out via setting `NodeList[`@@species`]` to `Array`. In more complex cases, each instance-creating method may have its own consideration, and a single @@species value on the constructor is insufficient.
+
+Supporting @@species compounds the cost already incurred by Type II by making the paths even more complex and the invariants more brittle. In the language, the fact that developers have to think at all about @@species, which is not generally useful, is harmful.
+
+There are no known compelling use cases that are worth this cost.
+
+## Type IV: delegation to property lookups in methods
+
+Type IV is supported if built-in methods consult properties on instances instead of internal slots. For example, if `RegExp.prototype[`@@match`]` calls `this.exec` instead of the built-in RegExp exec. Support for this is provided by, well, delegating to property lookups.
+
+Note that `RegExp`'s @@match, @@matchAll, @@replace, @@search, and @@split symbols themselves aren't strictly only for subclassing support, as they are not used in `RegExp` methods themselves. Instead, they are used as a protocol for `String` so that completely custom `RegExp` instances may be consumed.
+
+### Cost benefit
+
+**Harmful, and at great cost.**
+
+Type IV is harmful expressivity. It is very difficult for implementations to provide robust fast paths at all for `RegExp`, which users have high performance expectations of. The cost of this, depending on the number of overrideable properties, is the cost of Type II and III combined, and then some.
+
+It also makes the language significantly more complex to reason about for built-ins that support it. Users should not be subclassing `RegExp`s piecemeal, and overriding subsets of behaviors via `exec` or one of the flag properties like `global` and expect to have a good time. And similarly for `Promise`s. It also makes the spec very hard to understand (cf PromiseCapabilities).
+
+# Proposed new old semantics
+
+We propose to remove support for Type II, Type III, and Type IV subclassing, and only keep Type I.
 
 ## `Array`
 
@@ -149,9 +200,7 @@ let mp = (new MyPromise(executor)).then(() => {});
 
 ### Constructor methods
 
-(This may be decoupled from the rest of the proposal.)
-
-The following methods on `Promise` will create and return a `Promise` object in the current Realm. They will require `this` to be the `Promise` constructor.
+The following methods on `Promise` will create and return a `Promise` object in the current Realm. They will ignore the `this` value.
 
 - `Promise.all`
 - `Promise.allSettled`
@@ -160,7 +209,7 @@ The following methods on `Promise` will create and return a `Promise` object in 
 - `Promise.reject`
 - `Promise.resolve`
 
-This means any subclass calling these methods on the subclass constructor will always get `Promise` instances back, or throw if not called with `Promise` as the receiver.
+This means any subclass calling these methods on the subclass constructor will always get `Promise` instances back.
 
 ```javascript
 class MyPromise extends Promise { /* ... * / }
@@ -198,7 +247,7 @@ let mb = (new MyBuffer(42)).filter((x) => true);
 
 ### Constructor methods
 
-The following methods on _TypedArray_ will create and return an _TypedArray_ exotic object in the current Realm. They will require `this` to be the _TypedArray_ constructor.
+The following methods on _TypedArray_ will create and return an _TypedArray_ exotic object in the current Realm. They will ignore the `this` value.
 
 - _TypedArray_`.from`
 - _TypedArray_`.of`
@@ -251,7 +300,7 @@ _TypedArray_`[`@@species`]` will be removed.
 
 `Symbol.species` will remain as a vestigial symbol if any user code wants to use it in its own subclassing protocol.
 
-# Web Compatibility Challenge
+# Web compatibility
 
 Built-in subclassing was added as part of ES6. All major browsers have shipped support for it for years: Chrome since 51, Firefox since 41, and Safari since 10. The compatibility risk of unshipping @@species is very real.
 
@@ -266,9 +315,20 @@ Very preliminary numbers suggest that there is significant number of occurrences
 
 Thus, the working hypothesis is that most of the real uses are false positives due to outdated shims, and this change is by and large web compatible.
 
+## Hunch by subclassing type
+
+- Removing Type II has the biggest compatibility risk
+- Removing Type III is likely to be compatible
+- Removing Type IV is likely to be compatible
+
 ## Notable libraries that break
 
 ### Node.js `Buffer`s and the `Buffer` [polyfill](https://github.com/feross/buffer)
 
 `Buffer` is a subclass of `Uint8Array`. Uses of `Uint8Array.prototype.map`, `Uint8Array.prototype.filter`, `Uint8Array.prototype.subarray`, and `Uint8Array.prototype.slice` will produce `Uint8Array`s in the proposed semantics instead of `Buffer`s. Note that `Buffer` overrides `slice`, but inherits the other three methods.
 
+# Exit criteria
+
+If removing Type III and Type IV is not web compatible, this proposal shall be withdrawn.
+
+If removing Type II is not web compatible (or if there is renewed consensus in TC39 to uphold developer intuition) but removing Type III and Type IV subclassing is web compatible, then this proposal shall explore alternative ways to support only Type II with less implementation and security burden. If no good alternative arises, and implementers deem the benefits of removing Type III and Type IV alone does not justify changing behavior, this proposal shall be withdrawn.
