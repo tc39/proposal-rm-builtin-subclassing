@@ -17,7 +17,7 @@ significant burden:
 - Performance cliffs
 - Security bugs
 
-Natalie Silvanoich gave a [talk](https://docs.google.com/presentation/d/11fkQeEisoszNGF8SrautVT1ltSnsQBWRxJ4usoc-g_o/edit#slide=id.g2b34aaab4a_0_10) to TC39 in 2018 that called out the effect of @@species on security vulnerabilities. Below is a list of security bugs caused by @@species:
+[Natalie Silvanoich](https://github.com/natashenka) from Project Zero gave a [talk](https://docs.google.com/presentation/d/11fkQeEisoszNGF8SrautVT1ltSnsQBWRxJ4usoc-g_o/edit#slide=id.g2b34aaab4a_0_10) to TC39 in 2018 that called out the effect of @@species on security vulnerabilities. Below is a list of security bugs caused by @@species:
 
 Chrome:
 - https://bugs.chromium.org/p/chromium/issues/detail?id=920491
