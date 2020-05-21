@@ -2,9 +2,9 @@
 
 Champions: Shu-yu Guo (Google), Yulia Startsev (Mozilla)
 
-Subclassing of `Array`, `RegExp`, `Promise`, and _TypedArray_ constructors via @@species is considered by many implementers and committee members to be one of TC39’s greatest mistakes for the language. It imposes great complexity on the implementation and mental model of the language, the cost which has resulted in many security vulnerabilities.
+Subclass instance creation via @@species in built-in methods of `Array`, `RegExp`, `Promise`, and _TypedArray_, as well as property lookups of e.g. `"exec"` on the receiver in built-in methods of `RegExp`, are considered by many implementers and some committee members to be one of TC39’s greatest mistakes for the language. It imposes great complexity on the implementation and mental model of the language, the cost which has resulted in many security vulnerabilities.
 
-This proposal seeks to remove support subclassing via @@species and related machinery, such as property lookups of `"flags"` and `"exec"` in certain `RegExp` built-ins.
+This proposal seeks to remove subclassing support via @@species and related machinery, such as property lookups of `"flags"` and `"exec"` in certain `RegExp` built-ins.
 
 This is a significant, fill-or-kill, backwards incompatible change that seeks to remove all built-in subclassing machinery. Doing finer-grained removal for certain methods or constructors will result in more confusion and does not remedy the complexity and maintenance burden costs.
 
