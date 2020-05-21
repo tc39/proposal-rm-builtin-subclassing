@@ -61,7 +61,7 @@ Type II is the intuition enjoyed by many developers. It enables user libraries t
 
 However, it incurs implementation complexity in that built-in methods have overrideable behavior that results in arbitrary code being executed via `this.constructor`. In implementations, this results in a proliferation of slow-paths and invariants that cause JIT code to deoptimize. Failure to do so may and have resulted in serious security vulnerabilities in browsers. In the language, `this.constructor` resulting in possible arbitrary code execution in some built-ins increases difficulty of reasoning.
 
-## Type III: customizable subclass creation in built-in methods
+## Type III: customizable subclass instance creation in built-in methods
 
 Type III is supported if built-in methods create new instances of the subclass's choosing. For example, if `Array.prototype.map` or `Array.from` returns instances of subclasses of `Array[`@@species`]`. Support for this is provided by delegating to `this.constructor[`@@species`]` inside built-in methods with custom values for the @@species property.
 
