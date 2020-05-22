@@ -51,7 +51,7 @@ Type I is used by user libraries, as well as by the web platform in WebIDL and D
 
 ## Type II: subclass instance creation in built-in methods
 
-Type II is supported if built-in methods create new instances of the subclass. For example, if `Array.prototype.map` or `Array.from` returns instances of subclasses of `Array`. Support for this is provided by delegating to `this.constructor[`@@species`]` inside built-in methods for the default @@species getter.
+Type II is supported if built-in methods create new instances of the subclass. For example, if `Array.prototype.map` or `Array.from` returns instances of subclasses of `Array`. Support for this is _subsumed_ by the support for Type III below via `this.constructor[`@@species`]`.
 
 ### Cost benefit
 
@@ -63,7 +63,9 @@ However, it incurs implementation complexity in that built-in methods have overr
 
 ## Type III: customizable subclass instance creation in built-in methods
 
-Type III is supported if built-in methods create new instances of the subclass's choosing. For example, if `Array.prototype.map` or `Array.from` returns instances of subclasses of `Array[`@@species`]`. Support for this is provided by delegating to `this.constructor[`@@species`]` inside built-in methods with custom values for the @@species property.
+Type III is supported if built-in methods create new instances of the subclass's choosing. For example, if `Array.prototype.map` or `Array.from` returns instances of subclasses of `Array` via `SubclassConstructor[`@@species`]`. Support for this is provided by delegating to `this.constructor[`@@species`]` inside built-in methods with custom values for the @@species property.
+
+The main difference between Type II and Type III is user expectation, not implementation. Type II is the user expectation that built-in methods, when called on instances of subclasses, have some way of querying the class of those instances and create instances of the subclass. Type III is the addition that subclasses themselves can override Type II behavior programmatically.
 
 ### Cost benefit
 
@@ -88,6 +90,9 @@ Note that `RegExp`'s @@match, @@matchAll, @@replace, @@search, and @@split symbo
 Type IV is harmful expressivity. It is very difficult for implementations to provide robust fast paths at all for `RegExp`, which users have high performance expectations of. The cost of this, depending on the number of overrideable properties, is the cost of Type II and III combined, and then some.
 
 It also makes the language significantly more complex to reason about for built-ins that support it. Users should not be subclassing `RegExp`s piecemeal, and overriding subsets of behaviors via `exec` or one of the flag properties like `global` and expect to have a good time. And similarly for `Promise`s. It also makes the spec very hard to understand (cf PromiseCapabilities).
+
+
+(Since `RegExp`'s symbols aren't for subclassing, they are not considered harmful in this context.)
 
 # Proposed new old semantics
 
