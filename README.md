@@ -273,7 +273,7 @@ _TypedArray_`[`@@species`]` will be removed.
 
 ### Prototype methods
 
-`ArrayBuffer.prototype.slice` will create and return an %ArrayBuffer% object in the current Realm. It will no longer consule `this.constructor[`@@species`]`.
+`ArrayBuffer.prototype.slice` will create and return an %ArrayBuffer% object in the current Realm. It will no longer consult `this.constructor[`@@species`]`.
 
 ### Removing @@species
 
@@ -283,7 +283,7 @@ _TypedArray_`[`@@species`]` will be removed.
 
 ### Prototype methods
 
-`SharedArrayBuffer.prototype.slice` will create and return an %SharedArrayBuffer% object in the current Realm. It will no longer consule `this.constructor[`@@species`]`.
+`SharedArrayBuffer.prototype.slice` will create and return an %SharedArrayBuffer% object in the current Realm. It will no longer consult `this.constructor[`@@species`]`.
 
 ### Removing @@species
 
