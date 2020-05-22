@@ -43,6 +43,29 @@ Supporting built-in subclassing has also negatively affected authoring of new bu
 
 Type I is supported if creating subclasses of built-ins is possible. For example, if derived class can call `super()`. Support for this is provided via `new.target`.
 
+### Example
+
+```js
+class A extends Array {
+  constructor(a,b,c) {
+    super(a,b,c);
+  }
+}
+new A(1,2,3);        // return type: A
+```
+
+Without Type I support, and doesn't support `new.target` the following would be true
+
+```js
+class A extends Array {
+  constructor(a,b,c) {
+    super(a,b,c);
+  }
+}
+new A(1,2,3);        // return type: Array
+```
+
+
 ### Cost benefit
 
 ㊟ **There is crucial dependence on Type I subclassing and it is worth the implementation and language cost.**
@@ -52,6 +75,19 @@ Type I is used by user libraries, as well as by the web platform in WebIDL and D
 ## Type II: subclass instance creation in built-in methods
 
 Type II is supported if built-in methods create new instances of the subclass. For example, if `Array.prototype.map` or `Array.from` returns instances of subclasses of `Array`. Support for this is _subsumed_ by the support for Type III below via `this.constructor[`@@species`]`.
+
+### Example
+
+```js
+class A extends Array {
+  constructor() {
+   // intentionally empty constructor
+  }
+}
+
+A.from([1,2,3])     // return type: A
+  .map(x => x + 1); // return type: A
+```
 
 ### Cost benefit
 
@@ -66,6 +102,17 @@ However, it incurs implementation complexity in that built-in methods have overr
 Type III is supported if built-in methods create new instances of the subclass's choosing. For example, if `Array.prototype.map` or `Array.from` returns instances of subclasses of `Array` via `SubclassConstructor[`@@species`]`. Support for this is provided by delegating to `this.constructor[`@@species`]` inside built-in methods with custom values for the @@species property.
 
 The main difference between Type II and Type III is user expectation, not implementation. Type II is the user expectation that built-in methods, when called on instances of subclasses, have some way of querying the class of those instances and create instances of the subclass. Type III is the addition that subclasses themselves can override Type II behavior programmatically.
+
+### Example
+
+```js
+class A extends Array {
+  static [Symbol.species] = Array;
+}
+
+A.from([1,2,3])     // return type: A
+  .map(x => x + 1); // return type: Array
+```
 
 ### Cost benefit
 
@@ -82,6 +129,21 @@ There are no known compelling use cases that are worth this cost.
 Type IV is supported if built-in methods consult properties on instances instead of internal slots. For example, if `RegExp.prototype[`@@match`]` calls `this.exec` instead of the built-in RegExp exec. Support for this is provided by, well, delegating to property lookups.
 
 Note that `RegExp`'s @@match, @@matchAll, @@replace, @@search, and @@split symbols themselves aren't strictly only for subclassing support, as they are not used in `RegExp` methods themselves. Instead, they are used as a protocol for `String` so that completely custom `RegExp` instances may be consumed.
+
+### Example
+
+```js
+class R extends RegExp {
+  constructor() {
+    // intentionally empty constructor, not calling super();
+  }
+
+  exec() {
+    return "overridden"
+  }
+}
+console.log("some string".match(new R("foo")))     // "overridden"
+```
 
 ### Cost benefit
 
@@ -113,9 +175,20 @@ The following methods on `Array.prototype` will create and return an `Array` exo
 
 This means a subclass calling these methods on subclass instances will always get `Array` instances back.
 
+Before this change:
+
 ```javascript
-class MyArray extends Array { /* ... * / }
+class MyArray extends Array { /* ... */ }
 let ma = (new MyArray(42)).map((x) => x);
+console.log(ma instanceof MyArray) // true
+```
+
+After this change:
+
+```javascript
+class MyArray extends Array { /* ... */ }
+let ma = (new MyArray(42)).map((x) => x);
+console.log(ma instanceof MyArray) // false
 // Result is an Array, not a MyArray.
 ```
 
@@ -128,15 +201,37 @@ The following methods on `Array` will create and return an `Array` exotic object
 
 This means any subclass calling these methods on the subclass constructor will always get `Array` instances back.
 
+Before this change:
+
 ```javascript
-class MyArray extends Array { /* ... * / }
+class MyArray extends Array { /* ... */ }
 let ma = MyArray.from([1,2,3]);
+console.log(ma instanceof MyArray) // true
+```
+
+After this change:
+
+```javascript
+class MyArray extends Array { /* ... */ }
+let ma = MyArray.from([1,2,3]);
+console.log(ma instanceof MyArray) // false
 // Result is an Array, not a MyArray.
 ```
 
 ### Removing @@species
 
-`Array[`@@species`]` will be removed.
+`Array[`@@species`]` will be removed. This means that the following will no longer be possible using
+the `@@species` symbol like this:
+
+```js
+class A extends Array {
+  static [Symbol.species] = OtherArray;
+}
+
+A.from([1,2,3])     // return type: A
+  .map(x => x + 1); // return type: OtherArray
+```
+
 
 ## `RegExp`
 
@@ -176,6 +271,31 @@ Notably, the `String` prototype methods are not proposed to be modified.
 
 `RegExp[`@@species`]` will be removed.
 
+
+### Example
+
+Before this change:
+
+```js
+class R extends RegExp {
+  exec() {
+    return "overridden";
+  }
+}
+console.log("some string".match(new R("foo")))     // "overridden"
+```
+
+After this change:
+
+```js
+class R extends RegExp {
+  exec() {
+    return "overridden";
+  }
+}
+console.log("some string".match(new R("foo")))     // null
+```
+
 ## `Promise`
 
 ### Prototype methods
@@ -187,9 +307,20 @@ The following methods on `Promise.prototype` will create and return a `Promise` 
 
 This means a subclass calling these methods on subclass instances will always get `Promise` instances back.
 
+Before this change:
+
 ```javascript
-class MyPromise extends Promise { /* ... * / }
+class MyPromise extends Promise { /* ... */ }
 let mp = (new MyPromise(executor)).then(() => {});
+console.log(mp instanceof MyPromise) // true
+```
+
+After this change:
+
+```javascript
+class MyPromise extends Promise { /* ... */ }
+let mp = (new MyPromise(executor)).then(() => {});
+console.log(mp instanceof MyPromise) // false
 // Result is a Promise, not a MyPromise.
 ```
 
@@ -206,9 +337,21 @@ The following methods on `Promise` will create and return a `Promise` object in 
 
 This means any subclass calling these methods on the subclass constructor will always get `Promise` instances back.
 
+
+Before this change:
+
 ```javascript
-class MyPromise extends Promise { /* ... * / }
+class MyPromise extends Promise { /* ... */ }
 let mp = MyPromise.resolve(() => {});
+console.log(mp instanceof MyPromise) // true
+```
+
+After this change:
+
+```javascript
+class MyPromise extends Promise { /* ... */ }
+let mp = MyPromise.resolve(() => {});
+console.log(mp instanceof MyPromise) // false
 // Result is an Promise, not a MyPromise.
 ```
 
@@ -234,9 +377,20 @@ The following methods on _TypedArray_`.prototype` will create and return a _Type
 
 This means a subclass calling these methods on subclass instances will always get `Promise` instances back.
 
+Before this change:
+
 ```javascript
-class MyBuffer extends Uint8Array { /* ... * / }
+class MyBuffer extends Uint8Array { /* ... */ }
 let mb = (new MyBuffer(42)).filter((x) => true);
+console.log(mb instanceof MyBuffer) // true
+```
+
+After this change:
+
+```javascript
+class MyBuffer extends Uint8Array { /* ... */ }
+let mb = (new MyBuffer(42)).filter((x) => true);
+console.log(mb instanceof MyBuffer) // false
 // Result is a Uint8Array, not a MyBuffer.
 ```
 
