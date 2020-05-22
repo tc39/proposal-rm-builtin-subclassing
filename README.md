@@ -91,7 +91,6 @@ Type IV is harmful expressivity. It is very difficult for implementations to pro
 
 It also makes the language significantly more complex to reason about for built-ins that support it. Users should not be subclassing `RegExp`s piecemeal, and overriding subsets of behaviors via `exec` or one of the flag properties like `global` and expect to have a good time. And similarly for `Promise`s. It also makes the spec very hard to understand (cf PromiseCapabilities).
 
-
 (Since `RegExp`'s symbols aren't for subclassing, they are not considered harmful in this context.)
 
 # Proposed new old semantics
@@ -143,11 +142,7 @@ let ma = MyArray.from([1,2,3]);
 
 RegExp subclassing machinery involves both @@species and dynamic property lookups on the `this` value in various prototype methods. Property lookups will be removed in favor of internal slots. @@species will be removed in favor of creating `RegExp` objects in the current Realm.
 
-### Constructor
-
-- The `RegExp(` _pattern_, _flags_ `)` constructor will no longer check for `IsRegExp(` _pattern_ `)`.
-- Step 2.b will be changed to check for [[RegExpMatcher]].
-- Step 5 will be removed.
+Notably, the protocol for `RegExp`-likes (e.g. @@match) is not removed as part of this proposal since they are not used by `RegExp` instance or constructor methods themselves.
 
 ### Prototype methods
 
@@ -175,12 +170,7 @@ These changes apply to the following methods.
 
 ### `String` prototype methods
 
-The following methods on `String.prototype` will be modified to check for [[RegExpMatcher]] where they are currently checking IsRegExp.
-
-- `String.prototype.startsWith`
-- `String.prototype.endsWith`
-- `String.prototype.includes`
-- `String.prototype.matchAll`
+Notably, the `String` prototype methods are not proposed to be modified.
 
 ### Removing @@species
 
