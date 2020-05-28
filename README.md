@@ -51,7 +51,7 @@ class A extends Array {
     super(a,b,c);
   }
 }
-new A(1,2,3);        // return type: A
+new A(1,2,3);      // return type: A
 ```
 
 Without Type I support, and doesn't support `new.target` the following would be true
@@ -62,7 +62,7 @@ class A extends Array {
     super(a,b,c);
   }
 }
-new A(1,2,3);        // return type: Array
+new A(1,2,3);      // return type: Array
 ```
 
 
@@ -79,14 +79,10 @@ Type II is supported if built-in methods create new instances of the subclass. F
 ### Example
 
 ```js
-class A extends Array {
-  constructor() {
-   // intentionally empty constructor
-  }
-}
+class A extends Array { }
 
-A.from([1,2,3])     // return type: A
-  .map(x => x + 1); // return type: A
+A.from([1,2,3])    // return type: A
+ .map(x => x + 1); // return type: A
 ```
 
 ### Cost benefit
@@ -110,8 +106,8 @@ class A extends Array {
   static [Symbol.species] = Array;
 }
 
-A.from([1,2,3])     // return type: A
-  .map(x => x + 1); // return type: Array
+A.from([1,2,3])    // return type: A
+ .map(x => x + 1); // return type: Array
 ```
 
 ### Cost benefit
@@ -132,17 +128,20 @@ Note that `RegExp`'s @@match, @@matchAll, @@replace, @@search, and @@split symbo
 
 ### Example
 
-```js
-class R extends RegExp {
-  constructor() {
-    // intentionally empty constructor, not calling super();
-  }
+I hope this example demonstrates that one cannot subclass `RegExp` piecemeal and have a good time.
 
-  exec() {
-    return "overridden"
-  }
-}
-console.log("some string".match(new R("foo")))     // "overridden"
+```js
+function R() { }
+Object.setPrototypeOf(R, RegExp);
+Object.setPrototypeOf(R.prototype, RegExp.prototype);
+R.prototype.exec = function() {
+  console.log("overridden");
+  return null;
+};
+// Define a new .global since RegExp#global throws on
+// non-RegExp-branded `this`
+Object.defineProperty(R.prototype, "global", { value: false });
+console.log("some string".match(new R("foo")))     // logs "overridden"
 ```
 
 ### Cost benefit
