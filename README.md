@@ -1,4 +1,4 @@
-# Subclassing support in built-in methods delenda est
+# Restricting subclassing support in built-in methods
 
 Champions: Shu-yu Guo (Google), Yulia Startsev (Mozilla)
 
