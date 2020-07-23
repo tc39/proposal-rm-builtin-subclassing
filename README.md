@@ -2,6 +2,10 @@
 
 Champions: Shu-yu Guo (Google), Yulia Startsev (Mozilla)
 
+Stage: 1
+
+Last presentation: [Notes](https://github.com/tc39/notes/blob/master/meetings/2020-06/june-3.md#restrict-subclassing-support-for-built-in-methods-stage-1), [slides](https://docs.google.com/presentation/d/1vJeJFueDwrj8ebXFdGsEO1J_Q-DzfU01dLEGVd26A9o/edit#slide=id.p)
+
 Subclass instance creation via @@species in built-in methods of `Array`, `RegExp`, `Promise`, and _TypedArray_, as well as property lookups of e.g. `"exec"` on the receiver in built-in methods of `RegExp`, are considered by many implementers and some committee members to be one of TC39’s greatest mistakes for the language. It imposes great complexity on the implementation and mental model of the language, the cost which has resulted in many security vulnerabilities.
 
 This proposal seeks to remove subclassing support via @@species and related machinery, such as property lookups of `"flags"` and `"exec"` in certain `RegExp` built-ins.
