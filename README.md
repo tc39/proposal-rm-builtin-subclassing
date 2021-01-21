@@ -378,7 +378,7 @@ The following methods on _TypedArray_`.prototype` will create and return a _Type
 - _TypedArray_`.prototype.slice`
 - _TypedArray_`.prototype.subarray`
 
-This means a subclass calling these methods on subclass instances will always get `Promise` instances back.
+This means a subclass calling these methods on subclass instances will always get _TypedArray_ instances back.
 
 Before this change:
 
