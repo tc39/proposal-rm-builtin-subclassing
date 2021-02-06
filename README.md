@@ -136,10 +136,10 @@ I hope this example demonstrates that one cannot subclass `RegExp` piecemeal and
 
 ```js
 class R extends RegExp {
-	exec() {
-		console.log("overridden");
-		return null;
-	}
+  exec() {
+    console.log("overridden");
+    return null;
+  }
 }
 
 console.log("some string".match(new R("foo")))     // logs "overridden"
