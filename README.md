@@ -135,16 +135,13 @@ Note that `RegExp`'s @@match, @@matchAll, @@replace, @@search, and @@split symbo
 I hope this example demonstrates that one cannot subclass `RegExp` piecemeal and have a good time.
 
 ```js
-function R() { }
-Object.setPrototypeOf(R, RegExp);
-Object.setPrototypeOf(R.prototype, RegExp.prototype);
-R.prototype.exec = function() {
-  console.log("overridden");
-  return null;
-};
-// Define a new .global since RegExp#global throws on
-// non-RegExp-branded `this`
-Object.defineProperty(R.prototype, "global", { value: false });
+class R extends RegExp {
+  exec() {
+    console.log("overridden");
+    return null;
+  }
+}
+
 console.log("some string".match(new R("foo")))     // logs "overridden"
 ```
 
