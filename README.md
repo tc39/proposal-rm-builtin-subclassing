@@ -200,6 +200,7 @@ console.log(ma instanceof MyArray) // false
 The following methods on `Array` will create and return an `Array` exotic object in the current Realm. They will no longer conditionally use the `this` value as a constructor if IsConstructor(`this`) is true.
 
 - `Array.from`
+- `Array.fromAsync`
 - `Array.of`
 
 This means any subclass calling these methods on the subclass constructor will always get `Array` instances back.
